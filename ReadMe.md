@@ -13,6 +13,7 @@ Expense Echo is a powerful finance tracker web application built with Node.js, E
 
 - **Frontend:** React
 - **Backend:** Node.js, Express.js
+- **Database:** Prisma (PostgreSQL) and SupaBase 
 - **License:** MIT
 
 ## Getting Started
