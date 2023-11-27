@@ -2,10 +2,28 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider =      "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  // Expenses Expenses[]
+}
+
+// model Expenses {
+//   id String @id @default(uuid())
+//   Author User @relation(fields: [authorId], references: [id])
+//   authorId String
+//   amount Float
+//   description String
+//   date DateTime @default(now())
+// }
+

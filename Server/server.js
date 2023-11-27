@@ -8,6 +8,9 @@ PORT = process.env.PORT;
 //Handling the errors and returning them as json
 app.use(errorMiddleWare);
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 //Routes
 app.use("/users", userRoutes);
 
