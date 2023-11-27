@@ -58,15 +58,53 @@ const register = asyncHandler(async (req, res) => {
 // @description Login user
 // @Route POST /users/login
 // @access public
-const login = (req, res) => {
-  res.send("This user is logged in!");
-};
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
+  //Check if user exist
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  //If user doesn't exist
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  //Check if the password is correct
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+  //If the password isn't correct
+  if (!isPasswordCorrect) {
+    res.status(401);
+    throw new Error("Invalid credentials!");
+  }
+
+  //Log the user and return user response
+  res.status(201).json({
+    status: 201,
+    success: true,
+    error: null,
+    results: {
+      data: {
+        message: "User Logged In Successfully",
+        token: generateToken(user.email, user.id),
+      },
+    },
+  });
+});
+
+//Generate token
 const generateToken = (email, id) => {
   return jwt.sign({ email, id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 };
+
+//Export the functions in order to use them in other files
 module.exports = {
   register,
   login,
