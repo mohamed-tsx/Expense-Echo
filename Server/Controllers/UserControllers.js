@@ -91,7 +91,7 @@ const login = asyncHandler(async (req, res) => {
     results: {
       data: {
         message: "User Logged In Successfully",
-        token: generateToken(user.email, user.id),
+        token: generateToken(user.email, user.name),
       },
     },
   });
@@ -99,7 +99,7 @@ const login = asyncHandler(async (req, res) => {
 
 //Generate token
 const generateToken = (email, id) => {
-  return jwt.sign({ email, id }, process.env.JWT_SECRET, {
+  return jwt.sign({ email, name }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 };
