@@ -1,6 +1,7 @@
 const prisma = require("../Config/Prisma");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // @description Register new User
 // @Route POST /users
@@ -21,13 +22,16 @@ const register = asyncHandler(async (req, res) => {
     },
   });
 
+  // if the user is already registered
   if (userExists) {
     res.status(401);
     throw new Error("User already exists");
   }
 
+  // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  //Register the user
   const user = await prisma.user.create({
     data: {
       name,
@@ -36,6 +40,7 @@ const register = asyncHandler(async (req, res) => {
     },
   });
 
+  // Respond with success and user information with token
   res.status(201).json({
     status: 201,
     success: true,
@@ -44,6 +49,7 @@ const register = asyncHandler(async (req, res) => {
       data: {
         Message: "User Created Successfully",
         user,
+        token: generateToken(user.email, user.id),
       },
     },
   });
@@ -54,6 +60,12 @@ const register = asyncHandler(async (req, res) => {
 // @access public
 const login = (req, res) => {
   res.send("This user is logged in!");
+};
+
+const generateToken = (email, id) => {
+  return jwt.sign({ email, id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
 };
 module.exports = {
   register,

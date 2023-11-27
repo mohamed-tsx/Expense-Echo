@@ -5,14 +5,14 @@ const userRoutes = require("./Routes/UserRoutes");
 const { errorMiddleWare } = require("./MiddleWares/errorMiddleWare");
 PORT = process.env.PORT;
 
-//Handling the errors and returning them as json
-app.use(errorMiddleWare);
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 //Routes
 app.use("/users", userRoutes);
+
+//Handling the errors and returning them as json
+app.use(errorMiddleWare);
 
 app.listen(PORT, () => {
   console.log(`Server is running on PORT ${PORT}`);
