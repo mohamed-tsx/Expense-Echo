@@ -21,19 +21,19 @@ const Protect = asyncHandler(async (req, res, next) => {
       // Find the user in the database based on the decoded information
       const user = await Prisma.user.findUnique({
         where: {
-          name: decoded.name,
+          id: decoded.id,
           email: decoded.email,
         },
       });
+      // Attach the user to the request for further use in the route
 
+      req.user = user;
       // If the user does not exist, return an error
       if (!user) {
         res.status(401);
         throw new Error("Authentication failed: User not found");
       }
 
-      // Attach the user to the request for further use in the route
-      req.user = user;
       next();
     } catch (error) {
       // Handle token verification errors

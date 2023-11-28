@@ -4,7 +4,8 @@
   "description": "",
   "main": "Server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "db-push": "npx prisma db push"
   },
   "author": "Mohamed Mohamud",
   "license": "ISC",

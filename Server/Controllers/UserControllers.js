@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 // @Route POST /users
 // @access public
 const register = asyncHandler(async (req, res) => {
+  //Excracting required fields from request body
   const { name, email, password } = req.body;
 
   //Check if some required fields are empty
@@ -29,7 +30,7 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedpassword = await bcrypt.hash(password, 10);
 
   //Register the user
   const user = await prisma.user.create({
@@ -61,29 +62,29 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  //Check if user exist
+  // Check if user exists
   const user = await prisma.user.findUnique({
     where: {
       email: email,
     },
   });
 
-  //If user doesn't exist
+  // If user doesn't exist
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  //Check if the password is correct
+  // Check if the password is correct
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
-  //If the password isn't correct
+  // If the password isn't correct
   if (!isPasswordCorrect) {
     res.status(401);
     throw new Error("Invalid credentials!");
   }
 
-  //Log the user and return user response
+  // Log the user and return user response
   res.status(201).json({
     status: 201,
     success: true,
@@ -91,7 +92,7 @@ const login = asyncHandler(async (req, res) => {
     results: {
       data: {
         message: "User Logged In Successfully",
-        token: generateToken(user.email, user.name),
+        token: generateToken(user.email, user.id),
       },
     },
   });
@@ -99,7 +100,7 @@ const login = asyncHandler(async (req, res) => {
 
 //Generate token
 const generateToken = (email, id) => {
-  return jwt.sign({ email, name }, process.env.JWT_SECRET, {
+  return jwt.sign({ email, id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 };
