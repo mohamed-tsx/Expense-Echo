@@ -4,12 +4,12 @@ const Protect = require("../MiddleWares/userAuthMiddleWare.js");
 const {
   registerExpense,
   getAllexpenses,
+  getCategoryExpenses,
 } = require("../Controllers/expenseControllers.js");
 
-// @description Registering an expense
-// @route /expense/
-// @access private
+//Expense routes
 router.post("/", Protect, registerExpense);
 router.get("/", Protect, getAllexpenses);
+router.get("/category", Protect, getCategoryExpenses);
 
 module.exports = router;

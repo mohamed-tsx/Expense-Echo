@@ -30,7 +30,7 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Hash the password
-  const hashedpassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   //Register the user
   const user = await prisma.user.create({

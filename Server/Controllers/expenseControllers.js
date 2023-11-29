@@ -1,35 +1,49 @@
 // Import necessary modules and configurations
 const Prisma = require("../Config/Prisma.js");
 const asyncHandler = require("express-async-handler");
+const Protect = require("../MiddleWares/userAuthMiddleWare.js");
 
 // @description Handle registration of a new expense
 // @Route POST /expense/
 // @access private
 const registerExpense = asyncHandler(async (req, res) => {
-  // Extract amount and description from the request body
-  const { amount, description } = req.body;
+  const { amount, description, categoryName } = req.body;
 
-  // Check if both amount and description are provided, otherwise send a 400 response
-  if (!amount || !description) {
+  if (!amount || !description || !categoryName) {
     res.status(400);
-    throw new Error("Please fill all the fields");
+    throw new Error("Please fill all the required fields");
   }
 
-  // Create a new expense in the database using Prisma
-  const newExpense = await Prisma.expense.create({
-    data: {
-      amount: parseFloat(req.body.amount), // Ensure amount is stored as a floating-point number
-      description,
-      userId: req.user.id, // Associate the expense with the user ID from the request
+  // Check if the category already exists
+  let existingCategory = await Prisma.category.findUnique({
+    where: {
+      name: categoryName,
     },
   });
 
-  // If the expense creation is successful, send a 201 response with the created expense details
-  if (!newExpense) {
-    throw new Error("Please fix the issue"); // Throw an error if the expense creation fails
+  // If category is not found, create a new category
+  if (!existingCategory) {
+    existingCategory = await Prisma.category.create({
+      data: {
+        name: categoryName,
+      },
+    });
   }
 
-  // Send a success response with the created expense details
+  // Create a new expense with the existing or newly created category
+  const newExpense = await Prisma.expense.create({
+    data: {
+      amount: parseFloat(amount),
+      description,
+      categoryName: existingCategory.name, // Use the name of the existing or newly created category
+      userId: req.user.id,
+    },
+  });
+
+  if (!newExpense) {
+    throw new Error("Failed to create the expense");
+  }
+
   res.status(201).json({
     status: 201,
     error: null,
@@ -41,9 +55,6 @@ const registerExpense = asyncHandler(async (req, res) => {
 // @Route GET /expense/
 // @access private
 const getAllexpenses = asyncHandler(async (req, res) => {
-  // Log the user ID for debugging purposes
-  console.log(req.user.id);
-
   // Find all expenses in the database associated with the user ID from the request
   const allExpense = await Prisma.expense.findMany({
     where: {
@@ -67,8 +78,48 @@ const getAllexpenses = asyncHandler(async (req, res) => {
   });
 });
 
+const getCategoryExpenses = asyncHandler(async (req, res) => {
+  // Retrieve the category name from the params
+  const { categoryName } = req.body;
+
+  // Find the category by name
+  const category = await Prisma.category.findUnique({
+    where: {
+      name: categoryName,
+    },
+  });
+
+  if (!category) {
+    // If the category does not exist, return a 404 response
+    res.status(404).json({
+      success: false,
+      error: "Category not found",
+      results: null,
+    });
+    return;
+  }
+
+  // Find all expenses for the user and the specific category
+  const expenseCategory = await Prisma.expense.findMany({
+    where: {
+      userId: req.user.id,
+      categoryName: categoryName, // Assuming categoryName is the field in Prisma.expense model
+    },
+  });
+
+  // Send a success response with the list of expenses that belong to this specific category
+  res.status(200).json({
+    success: true,
+    error: null,
+    results: {
+      data: expenseCategory,
+    },
+  });
+});
+
 // Export the functions for use in other parts of the application
 module.exports = {
   registerExpense,
   getAllexpenses,
+  getCategoryExpenses,
 };

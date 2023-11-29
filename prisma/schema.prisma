@@ -1,3 +1,5 @@
+// Prisma schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,19 +10,25 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(uuid())
+  id       String    @id @default(uuid())
   name     String
-  email    String   @unique
+  email    String    @unique
   password String
-  expense Expense[]
+  expense  Expense[]
 }
 
-
 model Expense {
-  id String @id @default(uuid())
-  userId String
-  amount Float
-  description String
-  date DateTime @default(now())
-  user User @relation(fields: [userId],references: [id])
+  id           String   @id @default(uuid())
+  userId       String
+  amount       Float
+  description  String
+  categoryName String
+  date         DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
+  category     Category @relation(fields: [categoryName], references: [name])
+}
+
+model Category {
+  name     String   @unique
+  expense Expense[]
 }
