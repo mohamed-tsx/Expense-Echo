@@ -92,6 +92,7 @@ const registerExpense = asyncHandler(async (req, res) => {
     userBalance: updatedUser.balance,
   });
 });
+
 // @description Retrieve all expenses associated with the authenticated user
 // @Route /expense/
 // METHOD GET
@@ -285,6 +286,10 @@ const updateExpense = asyncHandler(async (req, res) => {
   });
 });
 
+// @description deleting existing expense
+// @Route /expense/:id
+// @METHOD DELETE
+// @Access private
 const deleteExpense = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
