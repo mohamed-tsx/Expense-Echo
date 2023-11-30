@@ -1,10 +1,10 @@
 // Import necessary modules and configurations
 const Prisma = require("../Config/Prisma.js");
 const asyncHandler = require("express-async-handler");
-const Protect = require("../MiddleWares/userAuthMiddleWare.js");
 
 // @description Handle registration of a new expense
-// @Route POST /expense/
+// @Route /expense/
+// METHOD POST
 // @access private
 const registerExpense = asyncHandler(async (req, res) => {
   const { amount, description, categoryName, type } = req.body;
@@ -92,7 +92,8 @@ const registerExpense = asyncHandler(async (req, res) => {
   });
 });
 // @description Retrieve all expenses associated with the authenticated user
-// @Route GET /expense/
+// @Route /expense/
+// METHOD GET
 // @access private
 const getAllexpenses = asyncHandler(async (req, res) => {
   // Find all expenses in the database associated with the user ID from the request
@@ -118,6 +119,10 @@ const getAllexpenses = asyncHandler(async (req, res) => {
   });
 });
 
+// @description Retreive expenses in speciefic category
+// @Route /expense/category/
+// METHOD GET
+// @Access private
 const getCategoryExpenses = asyncHandler(async (req, res) => {
   // Retrieve the category name from the params
   const { categoryName } = req.body;
@@ -157,9 +162,35 @@ const getCategoryExpenses = asyncHandler(async (req, res) => {
   });
 });
 
+// @description Retreive a speciefic expense
+// @Route /expense/id
+// @METHOD GET
+// @Access private
+const getExpense = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.user.id;
+
+  const expense = await Prisma.expense.findUnique({
+    where: {
+      id,
+      userId,
+    },
+  });
+
+  // Send a success response with the speciefic expense
+  res.status(200).json({
+    success: true,
+    error: null,
+    results: {
+      data: expense,
+    },
+  });
+});
+
 // Export the functions for use in other parts of the application
 module.exports = {
   registerExpense,
   getAllexpenses,
   getCategoryExpenses,
+  getExpense,
 };
