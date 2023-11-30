@@ -7,9 +7,9 @@ const Protect = require("../MiddleWares/userAuthMiddleWare.js");
 // @Route POST /expense/
 // @access private
 const registerExpense = asyncHandler(async (req, res) => {
-  const { amount, description, categoryName } = req.body;
+  const { amount, description, categoryName, type } = req.body;
 
-  if (!amount || !description || !categoryName) {
+  if (!amount || !description || !categoryName || !type) {
     res.status(400);
     throw new Error("Please fill all the required fields");
   }
@@ -29,26 +29,48 @@ const registerExpense = asyncHandler(async (req, res) => {
       },
     });
   }
+  let isExpense;
+
+  if (type === "expense") {
+    isExpense = true;
+  } else {
+    isExpense = false;
+  }
+
+  let transactionAmount;
+
+  if (isExpense) {
+    transactionAmount = -amount;
+  } else {
+    transactionAmount = amount;
+  }
 
   // Create a new expense with the existing or newly created category
-  const newExpense = await Prisma.expense.create({
+  const newTransaction = await Prisma.expense.create({
     data: {
-      amount: parseFloat(amount),
+      amount: parseFloat(transactionAmount),
       description,
       categoryName: existingCategory.name, // Use the name of the existing or newly created category
       userId: req.user.id,
     },
   });
 
-  if (!newExpense) {
-    throw new Error("Failed to create the expense");
-  }
+  // Update the user's balance
+  const updatedUser = await Prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      balance: {
+        increment: parseFloat(transactionAmount),
+      },
+    },
+  });
 
   res.status(201).json({
     status: 201,
     error: null,
     success: true,
-    expense: newExpense,
+    transaction: newTransaction,
+    userBalance: updatedUser.balance,
   });
 });
 // @description Retrieve all expenses associated with the authenticated user
