@@ -31,6 +31,7 @@ const registerExpense = asyncHandler(async (req, res) => {
   }
   let isExpense;
 
+  //Check if the expense type is income or expense
   if (type === "expense") {
     isExpense = true;
   } else {
@@ -39,10 +40,27 @@ const registerExpense = asyncHandler(async (req, res) => {
 
   let transactionAmount;
 
+  //If the transaction type is expense make the amount minus or if it's not make the amount plus
   if (isExpense) {
     transactionAmount = -amount;
   } else {
     transactionAmount = amount;
+  }
+
+  const user = await Prisma.user.findUnique({
+    where: {
+      id: req.user.id,
+    },
+  });
+
+  // Check if the transaction amount exceeds the user's balance
+  if (user.balance + transactionAmount < 0) {
+    // Reject the transaction or handle the situation as needed
+    res.status(400).json({
+      success: false,
+      error: "Transaction amount exceeds the available balance.",
+    });
+    return;
   }
 
   // Create a new expense with the existing or newly created category
