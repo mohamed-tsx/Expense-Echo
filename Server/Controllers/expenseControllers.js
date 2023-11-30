@@ -178,6 +178,11 @@ const getExpense = asyncHandler(async (req, res) => {
     },
   });
 
+  if (!expense) {
+    res.status(404);
+    throw new Error("Expense not found!");
+  }
+
   // Send a success response with the speciefic expense
   res.status(200).json({
     success: true,
@@ -190,7 +195,7 @@ const getExpense = asyncHandler(async (req, res) => {
 
 // @description Updating existing expense
 // @Route /expense/:id
-// @METHOD POST
+// @METHOD PUT
 // @Access private
 const updateExpense = asyncHandler(async (req, res) => {
   const expenseId = req.params.id;
@@ -280,6 +285,49 @@ const updateExpense = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteExpense = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    // Check if the expense exists
+    const existingExpense = await Prisma.expense.findUnique({
+      where: { id },
+    });
+
+    // Check if the expense exists
+    if (!existingExpense) {
+      res.status(404).json({
+        success: false,
+        error: "Expense not found",
+      });
+      return;
+    }
+
+    // Check if the user is authorized to delete the expense
+    if (existingExpense.userId !== userId) {
+      res.status(403);
+      throw new Error("You are not authorized to delete this expense!");
+    }
+
+    // Delete the expense
+    await Prisma.expense.delete({
+      where: { id },
+    });
+
+    res.status(200).json({
+      success: true,
+      error: null,
+      message: "Expense deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+});
+
 // Export the functions for use in other parts of the application
 module.exports = {
   registerExpense,
@@ -287,4 +335,5 @@ module.exports = {
   getCategoryExpenses,
   getExpense,
   updateExpense,
+  deleteExpense,
 };
