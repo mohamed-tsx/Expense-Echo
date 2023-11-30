@@ -6,6 +6,7 @@ const {
   getAllexpenses,
   getCategoryExpenses,
   getExpense,
+  updateExpense,
 } = require("../Controllers/expenseControllers.js");
 
 //Expense routes
@@ -13,4 +14,5 @@ router.post("/", Protect, registerExpense);
 router.get("/", Protect, getAllexpenses);
 router.get("/category", Protect, getCategoryExpenses);
 router.get("/:id", Protect, getExpense);
+router.put("/:id", Protect, updateExpense);
 module.exports = router;

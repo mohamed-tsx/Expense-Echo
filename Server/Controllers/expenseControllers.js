@@ -68,7 +68,8 @@ const registerExpense = asyncHandler(async (req, res) => {
     data: {
       amount: parseFloat(transactionAmount),
       description,
-      categoryName: existingCategory.name, // Use the name of the existing or newly created category
+      categoryName: existingCategory.name,
+      type,
       userId: req.user.id,
     },
   });
@@ -187,10 +188,103 @@ const getExpense = asyncHandler(async (req, res) => {
   });
 });
 
+// @description Updating existing expense
+// @Route /expense/:id
+// @METHOD POST
+// @Access private
+const updateExpense = asyncHandler(async (req, res) => {
+  const expenseId = req.params.id;
+  const { amount, description, type, categoryName } = req.body;
+
+  // Check if the expense exists
+  const existingExpense = await Prisma.expense.findUnique({
+    where: { id: expenseId },
+    select: { userId: true, amount: true, categoryName: true },
+  });
+
+  if (!existingExpense) {
+    res.status(404).json({
+      success: false,
+      error: "Expense not found",
+    });
+    return;
+  }
+
+  // Check if the authenticated user is the owner of the expense
+  if (existingExpense.userId !== req.user.id) {
+    res.status(403).json({
+      success: false,
+      error: "You are not authorized to update this expense",
+    });
+    return;
+  }
+
+  // Determine whether it's an expense or income
+  const isExpense = type === "expense";
+
+  // Calculate the transaction amount based on the expense type
+  const transactionAmount = isExpense ? -amount : amount;
+
+  // Check if the updated transaction amount exceeds the user's balance
+  const currentUser = await Prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { balance: true },
+  });
+
+  if (currentUser.balance - existingExpense.amount + transactionAmount < 0) {
+    res.status(400).json({
+      success: false,
+      error: "Updated transaction amount exceeds the available balance.",
+    });
+    return;
+  }
+
+  // Find or create the category based on the provided category name
+  let existingCategory = await Prisma.category.findUnique({
+    where: { name: categoryName },
+  });
+
+  if (!existingCategory) {
+    existingCategory = await Prisma.category.create({
+      data: {
+        name: categoryName,
+      },
+    });
+  }
+
+  // Update the expense, including the categoryId
+  const updatedExpense = await Prisma.expense.update({
+    where: { id: expenseId },
+    data: {
+      amount: parseFloat(transactionAmount),
+      description,
+      categoryName: existingCategory.name, // Use the name of the existing or newly created category
+      type,
+    },
+  });
+
+  // Update the user's balance
+  const updatedUser = await Prisma.user.update({
+    where: { id: req.user.id },
+    data: {
+      balance: {
+        increment: parseFloat(transactionAmount - existingExpense.amount),
+      },
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    transaction: updatedExpense,
+    userBalance: updatedUser.balance,
+  });
+});
+
 // Export the functions for use in other parts of the application
 module.exports = {
   registerExpense,
   getAllexpenses,
   getCategoryExpenses,
   getExpense,
+  updateExpense,
 };
