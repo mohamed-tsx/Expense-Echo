@@ -16,6 +16,8 @@ const register = asyncHandler(async (req, res) => {
     throw new Error("Please fill all the required fields");
   }
 
+  console.log(name, email, password);
+
   //Check if the user is already registered
   const userExists = await prisma.user.findUnique({
     where: {
